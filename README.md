@@ -108,6 +108,21 @@ services
 
 **Note:** we are running the Stardog container as `root` user to avoid restricted volume permissions in Stardog images > 7.4.0, c.f. `database-config/docker-compose.stardog.yml`. 
 
+#### metaphactory with RDFox
+
+3. run `cp ./database-config/.env_rdfox .env`. 
+4. Open the file `.env` e.g. `vi .env` and perform following changes:
+    1. Change the value of the `COMPOSE_PROJECT_NAME` variable to a unique name (default is `my-deployment-1`). The name will be used to prefix container names as well as `vhost` entry in the nginx proxy (if used).
+
+
+5. Please perform additional steps below to prepare the RDFox configuration:
+    1. (Optional) modify GraphDB-specific parameters in the `/database-config/docker-compose.rdfox.yml` file, for example changing the default memory settings, or modifying the location where GraphDB stores its data on the host machine (by default, in the directory `graphdb-data` in the deployment directory). 
+    2. (Optional) modify the configuration of the default RDFox data store, which is automatically created on first boot. You can do so by editing `/database-config/graphdb-config/graphdb-repository-config.ttl`. For GraphDB 9.x please make sure to activate `/database-config/graphdb-config/graphdb9-repository-config.ttl` in `/database-config/docker-compose.graphdb.yml` (line 45f). If you wish to enable SHACL validation, a separate example configuration is provided in `/database-config/graphdb-config/graphdb-with-SHACL-config-example.ttl`.
+    3. Replace the content of the file at `/database-config/rdfox-config/RDFox.lic` with a valid RDFox license key.
+
+6. Run `docker compose up -d`. It is **important to run the command in the 'my-deployment' folder (containing the .env file)**, since docker-compose will pick up the `.env` file for parameterization.
+7. Open `http://localhost:10214` and login with user `admin` and password `admin`
+
 
 ## Troubleshooting
 

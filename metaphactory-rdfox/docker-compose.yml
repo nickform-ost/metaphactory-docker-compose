@@ -1,0 +1,51 @@
+version: "2.2"
+services:
+   initialize-rdfox-server-directory:
+      container_name: "${COMPOSE_PROJECT_NAME}-initialize-rdfox-server-directory"
+      environment:
+         - RDFOX_ROLE
+         - RDFOX_PASSWORD
+      image: "oxfordsemantic/rdfox-init:${RDFOX_VERSION}"
+      platform: linux/amd64
+      volumes:
+         - rdfox_server_directory:/home/rdfox/.RDFox
+      logging:
+         driver: json-file
+         options:
+            max-size: "200k"
+            max-file: "10"
+
+   rdfox:
+      command:
+         [
+            "daemon",
+            "request-logger",
+            "elf",
+            "elf-logger-fields",
+            "time cs-method cs-uri-stem cs-uri-query x-role-name sc-status time-taken",
+         ]
+      container_name: "${COMPOSE_PROJECT_NAME}-rdfox"
+      depends_on:
+         initialize-rdfox-server-directory:
+            condition: service_completed_successfully
+      image: "oxfordsemantic/rdfox:${RDFOX_VERSION}"
+      logging:
+         driver: json-file
+         options:
+            max-size: "200k"
+            max-file: "10"
+      networks:
+         - metaphactory_network
+      platform: linux/amd64
+      ports:
+         - 12110:12110
+      restart: unless-stopped
+      volumes:
+         - rdfox_server_directory:/home/rdfox/.RDFox
+
+   metaphactory:
+      depends_on:
+         - rdfox
+
+volumes:
+  rdfox_server_directory:

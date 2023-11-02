@@ -1,0 +1,14 @@
+@prefix mph: <http://www.metaphacts.com/ontologies/platform/repository#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rep: <http://www.openrdf.org/config/repository#> .
+@prefix sparqlr: <http://www.openrdf.org/config/repository/sparql#> .
+
+[] a rep:Repository ;
+   rep:repositoryID "default" ;
+   rdfs:label "RDFox data store with basic authentication" ;
+   rep:repositoryImpl [
+      rep:repositoryType "metaphactory:SPARQLBasicAuthRepository" ;
+      sparqlr:query-endpoint <http://rdfox:12110/datastores/default/sparql> ;
+      mph:username "admin" ;
+      mph:password "AdminPassword123"
+   ] .

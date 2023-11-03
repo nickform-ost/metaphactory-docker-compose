@@ -16,13 +16,23 @@ services:
             max-file: "10"
 
    rdfox:
+      cap_drop:
+         - ALL
       command:
          [
+            -allowed-schemes-on-load,
+            "file https",
             "daemon",
+            "channel-timeout",
+            "unlimited",
+            "query-time-limit",
+            "unlimited",
+            "connection-keep-alive-time",
+            "1000",
             "request-logger",
             "elf",
             "elf-logger-fields",
-            "time cs-method cs-uri-stem cs-uri-query x-role-name sc-status time-taken",
+            "date time cs-method cs-uri-stem cs-uri-query sc-status sc-bytes time-taken"
          ]
       container_name: "${COMPOSE_PROJECT_NAME}-rdfox"
       depends_on:

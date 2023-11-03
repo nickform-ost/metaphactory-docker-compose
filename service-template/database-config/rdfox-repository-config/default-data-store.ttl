@@ -10,5 +10,5 @@
       rep:repositoryType "metaphactory:SPARQLBasicAuthRepository" ;
       sparqlr:query-endpoint <http://rdfox:12110/datastores/default/sparql> ;
       mph:username "admin" ;
-      mph:password "AdminPassword123"
+      mph:password "admin"
    ] .

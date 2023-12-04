@@ -3,10 +3,10 @@ services:
    rdfox:
       volumes:
          - ./database-config/rdfox-config/RDFox.lic:/opt/RDFox/RDFox.lic
-   initialize-rdfox-server-directory:
+   initialize-rdfox:
       volumes:
          - ./database-config/rdfox-config/RDFox.lic:/opt/RDFox/RDFox.lic
-         - ./database-config/rdfox-config/initialize-rdfox-server-directory-shell-root:/data
+         - ./database-config/rdfox-config/initialize-rdfox-shell-root:/data
    metaphactory:
       volumes:
          - ./database-config/rdfox-repository-config/default-data-store.ttl:/runtime-data/config/repositories/default.ttl:rw

@@ -1,3 +1,1 @@
-set on-error stop
-
 dstore create default default-graph-name <https://example.com/defaultGraph>

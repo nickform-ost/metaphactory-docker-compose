@@ -118,8 +118,8 @@ services
     1. Replace the content of the file at `/database-config/rdfox-config/RDFox.lic` with a valid RDFox license key.
 
 6. Run `docker compose up -d`. It is **important to run the command in the 'my-deployment' folder (containing the .env file)**, since docker-compose will pick up the `.env` file for parameterization.
-7. To access the Metaphactory interface, open `http://localhost:10214` and login with user `admin` and password `admin`.
-8. To access the RDFox console, open `http://localhost:12110` and login with user `admin` and password `adming.`
+7. To access the Metaphactory interface, open <http://localhost:10214> and login with user `admin` and password `admin`.
+8. To access the RDFox console, open <http://localhost:12110/console/default> and login with user `admin` and password `admin.`
 
 
 ## Troubleshooting

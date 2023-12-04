@@ -1,7 +1,17 @@
 version: "2.2"
 services:
-   initialize-rdfox-server-directory:
-      container_name: "${COMPOSE_PROJECT_NAME}-initialize-rdfox-server-directory"
+   initialize-rdfox:
+      command:
+         [
+            "-persistence",                "file",
+            "-allowed-schemes-on-load",    "file https",
+            "-channel-timeout",            "unlimited",
+            "-connection-keep-alive-time", "1000",
+            "-elf-logger-fields",          "date time cs-method cs-uri-stem cs-uri-query sc-status sc-bytes time-taken",
+            "-query-time-limit",           "unlimited",
+            "-request-logger",             "elf",
+         ]
+      container_name: "${COMPOSE_PROJECT_NAME}-initialize-rdfox"
       environment:
          - RDFOX_ROLE
          - RDFOX_PASSWORD
@@ -18,25 +28,9 @@ services:
    rdfox:
       cap_drop:
          - ALL
-      command:
-         [
-            -allowed-schemes-on-load,
-            "file https",
-            "daemon",
-            "channel-timeout",
-            "unlimited",
-            "query-time-limit",
-            "unlimited",
-            "connection-keep-alive-time",
-            "1000",
-            "request-logger",
-            "elf",
-            "elf-logger-fields",
-            "date time cs-method cs-uri-stem cs-uri-query sc-status sc-bytes time-taken"
-         ]
       container_name: "${COMPOSE_PROJECT_NAME}-rdfox"
       depends_on:
-         initialize-rdfox-server-directory:
+         initialize-rdfox:
             condition: service_completed_successfully
       image: "oxfordsemantic/rdfox:${RDFOX_VERSION}"
       logging:

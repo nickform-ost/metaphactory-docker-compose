@@ -1,4 +1,3 @@
-version: "2.2"
 services:
  graphdb:
   container_name: "${COMPOSE_PROJECT_NAME}-graphdb"

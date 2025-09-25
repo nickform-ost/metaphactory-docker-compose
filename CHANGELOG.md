@@ -7,8 +7,9 @@ Note: when updating to a newer release of metaphactory, also regard the informat
 If not mentioned otherwise, the docker-compose definitions are backwards compatible to the previous released version.
 
 
-## unreleased (Release 5.9.0)
+## 2025-10-09 (Release 5.9.0)
 
+The docker tags have been updated to the 5.9.0 release of metaphactory.
 
 For metaphactory, we provide commented lines in `docker-compose.overwrite.yml`
 to ease activation of bundled apps.

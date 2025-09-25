@@ -30,6 +30,7 @@ services:
          "-query-time-limit",           "unlimited",
          "-request-logger",             "elf",
          "-max-memory",                 "${RDFOX_MAX_MEMORY}",
+         "-channel",                    "unsecure",
       ]
     container_name: "${COMPOSE_PROJECT_NAME}-initialize-rdfox"
     environment:

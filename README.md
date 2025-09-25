@@ -49,14 +49,14 @@ Then, depending on which database backend you want to use, enter the newly creat
     3. (Optional) you can also modify the `./database-config/graphdb-config/metaphactory.ttl` file, i.e. to use a different GraphDB database name or changing the default credentials for the repository connection with GraphDB. The credentials can optionally be externalized using the keys `repository.default.username` and `repository.default.password`, see https://help.metaphacts.com/resource/Help:ExternalizedSecrets for further details.
 
 6. Run `docker compose up -d`. It is **important to run the command in the 'my-deployment' folder (containing the .env file)**, since docker-compose will pick up the `.env` file for parameterization.
-7. GraphDB is started without a license pre-configured. In GraphDB 10 the database will operate in _Free Mode_, while for GraphDB 11 a license is required. To activate GraphDB SE/EE, a valid license can be set in the GraphDB workbench UI (http://localhost:7200). Note that a (trial) license can be requested through metaphacts. Alternatively, a license file can be mounted as volume through Docker by replacing `database-config/graphdb-config/license/graphdb.license` with a valid license and uncommenting the overridden _command_ of `database-config/docker-compose.graphdb.yml`.
+7. For GraphDB 11 a license is required. To activate GraphDB SE/EE, a valid license can be set in the GraphDB workbench UI (http://localhost:7200). Note that a (trial) license can be requested through metaphacts. Alternatively, a license file can be mounted as volume through Docker by replacing `database-config/graphdb-config/license/graphdb.license` with a valid license and uncommenting the overridden _command_ of `database-config/docker-compose.graphdb.yml`.  Note that in GraphDB 10 the database can operate in _Free Mode_, e.g., when switching back to `10.8.8` in the `.env` file. 
 8. Open `http://localhost:10214` and login with user `admin` and password `admin`
 9. (Optional) For small and medium-sized databases you can create an out-of-the-box Lucene full-text search connector by running the query which is provided on the corresponding help page.
 Please refer to http://localhost:10214/resource/Help:HowToConnectToGraphDB#full-text-search for more details. 
 
 ##### Compatibility with GraphDB versions
 
-metaphactory is generally compatible with GraphDB 10 and GraphDB 11. We recommend using latest patch releases of the specific major versions, i.e., `GraphDB 10.8.8` or `GraphDB 11.0.1`. Specific versions can be adjusted in the `.env` file.
+metaphactory is generally compatible with GraphDB 10 and GraphDB 11. We recommend using latest patch releases of the specific major versions, i.e., `GraphDB 10.8.8` or `GraphDB 11.1.0`. Specific versions can be adjusted in the `.env` file.
 
 
 #### metaphactory with Stardog

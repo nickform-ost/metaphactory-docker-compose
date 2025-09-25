@@ -12,6 +12,7 @@ If not mentioned otherwise, the docker-compose definitions are backwards compati
 
 Other changes:
 
+- Update GraphDB to 11.1.0 (Note: a GraphDB license is required)
 - Update RDFox to 7.4b (Note: requires `-channel` in the init parameters)
 - Update Nginx-proxy to 1.8.0 (Nginx version: 1.29.1)
 - Update ACME companion to 1.6.1

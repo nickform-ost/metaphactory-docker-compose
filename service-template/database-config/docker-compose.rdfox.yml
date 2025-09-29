@@ -6,9 +6,11 @@ services:
          #- ./rdfox-home:/home/rdfox/.RDFox
          
          - ./database-config/rdfox-config/RDFox.lic:/opt/RDFox/RDFox.lic
-
-      ports:
-         - 12110:12110
+      
+      # Uncomment to enable direct access to the RDFox Console 
+      # (at http://localhost:12110) available.
+      #ports:
+      #   - 12110:12110
 
    initialize-rdfox:
       volumes:

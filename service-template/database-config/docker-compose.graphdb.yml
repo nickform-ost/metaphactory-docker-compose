@@ -1,10 +1,10 @@
 services:
   graphdb:
 
-    # Make direct access to the GraphDB Workbench 
+    # Uncomment to enable direct access to the GraphDB Workbench 
     # (at http://localhost:7200) available.
-    ports:
-      - "7200:7200"
+    #ports:
+    #  - "7200:7200"
 
     # Uncomment to limit the amount of memory available to the GraphDB container
     # mem_limit: 2g

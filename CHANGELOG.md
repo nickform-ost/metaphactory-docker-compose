@@ -19,6 +19,7 @@ Other changes:
 - Update RDFox to 7.4b (Note: requires `-channel` in the init parameters)
 - Update Nginx-proxy to 1.8.0 (Nginx version: 1.29.1)
 - Update ACME companion to 1.6.1
+- No longer expose ports for the GraphDB workbench and RDFox console
 
 
 

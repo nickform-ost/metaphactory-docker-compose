@@ -10,6 +10,9 @@ If not mentioned otherwise, the docker-compose definitions are backwards compati
 ## unreleased (Release 5.9.0)
 
 
+For metaphactory, we provide commented lines in `docker-compose.overwrite.yml`
+to ease activation of bundled apps.
+
 Other changes:
 
 - Update GraphDB to 11.1.0 (Note: a GraphDB license is required)

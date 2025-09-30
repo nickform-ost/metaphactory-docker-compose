@@ -38,6 +38,34 @@ Note: the value can be set to `off` to disable (i.e. not define the header).
 | PERMISSIONS_POLICY                  | Permissions-Policy header                  | off                                                                                                                                                                 |
 
 
+## Fallback redirect for unknown hosts
+
+
+When an Nginx server is accessed via its IP address or a hostname it does not recognize (an unknown vhost), it is a security best practice to manage this traffic properly. Rather than displaying a generic 503 error, a better approach is to configure a fallback redirect to a known, valid domain. This prevents users from seeing a potentially untrusted self-signed certificate and steers them toward the correct system.
+
+To achieve this, you can create a file named `_fallback.conf` inside the `conf.d` directory. This file contains a catch-all server block that listens for all requests not matched by other configurations. This ensures that any request to an unknown host gets processed by this block.
+
+Here's an example of the configuration you would use:
+
+```
+server {
+    server_name __;
+    listen 443 ssl;
+    listen 80;
+    http2 on;
+    ssl_certificate /etc/nginx/certs/myhost.example.com.crt;
+    ssl_certificate_key /etc/nginx/certs/myhost.example.com.key;
+    ssl_dhparam /etc/nginx/certs/myhost.example.com.dhparam.pem;
+    return 301 https://myhost.example.com;
+}
+```
+
+Notes:
+
+* The certificate used in the fallback configuration should include the IP address in its respective fields (for browsers to accept it).
+* The filename `_fallback.conf` is a convention to ensure it is loaded before other configurations. Nginx processes files in alphabetical order, so a filename starting with `_` or a similar character will be read first.
+
+
 ## Activating changed settings
 
 * if environment variables in the container (see above) have been changed run `docker-compose up -d` to re-create the respective containers

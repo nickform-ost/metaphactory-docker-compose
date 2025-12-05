@@ -31,6 +31,7 @@
 {{- $_ := set $config "acme_http_challenge_accept_unknown_host" ($globals.Env.ACME_HTTP_CHALLENGE_ACCEPT_UNKNOWN_HOST | default "false" | parseBool) }}
 {{- $_ := set $config "enable_http2" ($globals.Env.ENABLE_HTTP2 | default "true") }}
 {{- $_ := set $config "enable_http3" ($globals.Env.ENABLE_HTTP3 | default "false") }}
+{{- $_ := set $config "enable_proxy_protocol" ($globals.Env.ENABLE_PROXY_PROTOCOL | default "false" | parseBool) }}
 {{- $_ := set $config "enable_http_on_missing_cert" ($globals.Env.ENABLE_HTTP_ON_MISSING_CERT | default "true") }}
 {{- $_ := set $config "https_method" ($globals.Env.HTTPS_METHOD | default "redirect") }}
 {{- $_ := set $config "non_get_redirect" ($globals.Env.NON_GET_REDIRECT | default "301") }}
@@ -64,9 +65,9 @@
 #     (none)
     {{- end }}
 {{- else }}
-# /!\ WARNING: Failed to find the Docker container labeled "{{ $globals.config.nginx_container_label }}" or the one running docker-gen. 
+# /!\ WARNING: Failed to find the Docker container labeled "{{ $globals.config.nginx_container_label }}" or the one running docker-gen.
 #              All upstream (backend) application containers will appear to be unreachable.
-#              Try removing the -only-exposed and -only-published arguments to docker-gen if you pass either of those. 
+#              Try removing the -only-exposed and -only-published arguments to docker-gen if you pass either of those.
 #              See https://github.com/nginx-proxy/docker-gen/issues/458.
 {{- end }}
 
@@ -290,7 +291,7 @@
         {{- $override = printf "/etc/nginx/vhost.d/%s_location_override" .Host }}
     {{- end }}
     {{- if exists $override }}
-    include {{ $override }};
+    include {{  printf "%s" (replace $override "*" "\\*" -1) }};
     {{- else }}
         {{- $keepalive := $vpath.keepalive }}
     location {{ .Path }} {
@@ -320,8 +321,10 @@
             {{- end }}
         {{- else if eq $proto "grpc" }}
         grpc_pass {{ trim $proto }}://{{ trim $upstream }};
+        grpc_set_header X-Real-IP $remote_addr;
         {{- else if eq $proto "grpcs" }}
         grpc_pass {{ trim $proto }}://{{ trim $upstream }};
+        grpc_set_header X-Real-IP $remote_addr;
         {{- else }}
         proxy_pass {{ trim $proto }}://{{ trim $upstream }}{{ trim $dest }};
         set $upstream_keepalive {{ if ne $keepalive "disabled" }}true{{ else }}false{{ end }};
@@ -336,9 +339,9 @@
         {{- end }}
 
         {{- if (exists (printf "/etc/nginx/vhost.d/%s_%s_location" .Host (sha1 .Path) )) }}
-        include {{ printf "/etc/nginx/vhost.d/%s_%s_location" .Host (sha1 .Path) }};
+        include {{ printf "/etc/nginx/vhost.d/%s_%s_location" (replace .Host "*" "\\*" -1) (sha1 .Path) }};
         {{- else if (exists (printf "/etc/nginx/vhost.d/%s_location" .Host)) }}
-        include {{ printf "/etc/nginx/vhost.d/%s_location" .Host}};
+        include {{ printf "/etc/nginx/vhost.d/%s_location" (replace .Host "*" "\\*" -1) }};
         {{- else if (exists "/etc/nginx/vhost.d/default_location") }}
         include /etc/nginx/vhost.d/default_location;
         {{- end }}
@@ -440,6 +443,19 @@ upstream {{ $vpath.upstream }} {
     {{- when .Enable "access_log /var/log/nginx/access.log vhost;" "" }}
 {{- end }}
 
+map $proxy_add_x_forwarded_for $proxy_x_forwarded_for {
+    {{- if $globals.config.trust_downstream_proxy }}
+        {{- if $globals.config.enable_proxy_protocol }}
+    default $proxy_protocol_addr;
+        {{- else }}
+    default $proxy_add_x_forwarded_for;
+        {{- end }}
+    {{- else }}
+    default $remote_addr;
+    {{- end }}
+    '' $remote_addr;
+}
+
 # If we receive X-Forwarded-Proto, pass it through; otherwise, pass along the
 # scheme used to connect to this server
 map $http_x_forwarded_proto $proxy_x_forwarded_proto {
@@ -454,8 +470,20 @@ map $http_x_forwarded_host $proxy_x_forwarded_host {
 
 # If we receive X-Forwarded-Port, pass it through; otherwise, pass along the
 # server port the client connected to
-map $http_x_forwarded_port $proxy_x_forwarded_port {
-    default {{ if $globals.config.trust_downstream_proxy }}$http_x_forwarded_port{{ else }}$server_port{{ end }};
+map $http_x_forwarded_port $_proxy_x_forwarded_port {
+    {{ if $globals.config.trust_downstream_proxy }}
+        {{ if $globals.config.enable_proxy_protocol }}
+    default $proxy_protocol_server_port;
+        {{- else }}
+    default $http_x_forwarded_port;
+        {{- end }}
+    {{- else }}
+    default $server_port;
+    {{- end }}
+}
+
+map $_proxy_x_forwarded_port $proxy_x_forwarded_port {
+    default $_proxy_x_forwarded_port;
     '' $server_port;
 }
 
@@ -559,7 +587,7 @@ proxy_set_header Host $host$host_port;
 proxy_set_header Upgrade $http_upgrade;
 proxy_set_header Connection $proxy_connection;
 proxy_set_header X-Real-IP $remote_addr;
-proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header X-Forwarded-For $proxy_x_forwarded_for;
 proxy_set_header X-Forwarded-Host $proxy_x_forwarded_host;
 proxy_set_header X-Forwarded-Proto $proxy_x_forwarded_proto;
 proxy_set_header X-Forwarded-Ssl $proxy_x_forwarded_ssl;
@@ -760,7 +788,7 @@ proxy_set_header Proxy "";
     {{- $ssl_policy := groupByKeys $vhost_containers "Env.SSL_POLICY" | first | default "" }}
 
     {{- /* Get ssl_verify_client defined by containers w/ the same vhost, falling back to "on" */}}
-    {{- $ssl_verify_client := groupByLabel $vhost_containers "com.github.nginx-proxy.nginx-proxy.ssl_verify_client" | keys | first | default "on" }}																						   
+    {{- $ssl_verify_client := groupByLabel $vhost_containers "com.github.nginx-proxy.nginx-proxy.ssl_verify_client" | keys | first | default "on" }}
 
     {{- /* Get the HSTS defined by containers w/ the same vhost, falling back to "max-age=31536000". */}}
     {{- $hsts := groupByKeys $vhost_containers "Env.HSTS" | first | default $globals.config.hsts }}
@@ -811,7 +839,7 @@ proxy_set_header Proxy "";
         "acme_http_challenge_enabled" $acme_http_challenge_enabled
         "server_tokens" $server_tokens
         "ssl_policy" $ssl_policy
-        "ssl_verify_client" $ssl_verify_client											  
+        "ssl_verify_client" $ssl_verify_client
         "trust_default_cert" $trust_default_cert
         "upstream_name" $upstream_name
         "vhost_root" $vhost_root
@@ -849,6 +877,7 @@ proxy_set_header Proxy "";
         {{- $default_https_exists = or $default_https_exists (and $https $vhost.default) }}
         {{- $http3_enabled = or $http3_enabled $vhost.http3_enabled }}
     {{- end }}
+    {{- $proxy_protocol := when $globals.config.enable_proxy_protocol " proxy_protocol" "" }}
     {{- $fallback_http := not $default_http_exists }}
     {{- $fallback_https := not $default_https_exists }}
     {{- /*
@@ -866,21 +895,21 @@ server {
     {{ template "access_log" (dict "Enable" $globals.config.enable_access_log) }}
     http2 on;
         {{- if $fallback_http }}
-    listen {{ $globals.config.external_http_port }}; {{- /* Do not add `default_server` (see comment above). */}}
+    listen {{ $globals.config.external_http_port }} {{- $proxy_protocol }}; {{- /* Do not add `default_server` (see comment above). */}}
                 {{- if $globals.config.enable_ipv6 }}
-    listen [::]:{{ $globals.config.external_http_port }}; {{- /* Do not add `default_server` (see comment above). */}}
+    listen [::]:{{ $globals.config.external_http_port }} {{- $proxy_protocol }}; {{- /* Do not add `default_server` (see comment above). */}}
                 {{- end }}
         {{- end }}
         {{- if $fallback_https }}
-    listen {{ $globals.config.external_https_port }} ssl; {{- /* Do not add `default_server` (see comment above). */}}
+    listen {{ $globals.config.external_https_port }} ssl {{- $proxy_protocol }}; {{- /* Do not add `default_server` (see comment above). */}}
             {{- if $globals.config.enable_ipv6 }}
-    listen [::]:{{ $globals.config.external_https_port }} ssl; {{- /* Do not add `default_server` (see comment above). */}}
+    listen [::]:{{ $globals.config.external_https_port }} ssl {{- $proxy_protocol }}; {{- /* Do not add `default_server` (see comment above). */}}
             {{- end }}
             {{- if $http3_enabled }}
     http3 on;
-    listen {{ $globals.config.external_https_port }} quic reuseport; {{- /* Do not add `default_server` (see comment above). */}}
+    listen {{ $globals.config.external_https_port }} quic reuseport {{- $proxy_protocol }}; {{- /* Do not add `default_server` (see comment above). */}}
                 {{- if $globals.config.enable_ipv6 }}
-    listen [::]:{{ $globals.config.external_https_port }} quic reuseport; {{- /* Do not add `default_server` (see comment above). */}}
+    listen [::]:{{ $globals.config.external_https_port }} quic reuseport {{- $proxy_protocol }}; {{- /* Do not add `default_server` (see comment above). */}}
                 {{- end }}
             {{- end }}
     ssl_session_cache shared:SSL:50m;
@@ -920,7 +949,8 @@ server {
 {{- end }}
 
 {{- range $hostname, $vhost := $globals.vhosts }}
-    {{- $default_server := when $vhost.default "default_server" "" }}
+    {{- $default_server := when $vhost.default " default_server" "" }}
+    {{- $proxy_protocol := when $globals.config.enable_proxy_protocol " proxy_protocol" "" }}
 
     {{- range $path, $vpath := $vhost.paths }}
 # {{ $hostname }}{{ $path }}
@@ -934,9 +964,9 @@ server {
     server_tokens {{ $vhost.server_tokens }};
         {{- end }}
     {{ template "access_log" (dict "Enable" $globals.config.enable_access_log) }}
-    listen {{ $globals.config.external_http_port }} {{ $default_server }};
+    listen {{ $globals.config.external_http_port }} {{- $default_server }} {{- $proxy_protocol }};
         {{- if $globals.config.enable_ipv6 }}
-    listen [::]:{{ $globals.config.external_http_port }} {{ $default_server }};
+    listen [::]:{{ $globals.config.external_http_port }} {{- $default_server }} {{- $proxy_protocol }};
         {{- end }}
 
         {{- if (or $vhost.acme_http_challenge_legacy $vhost.acme_http_challenge_enabled) }}
@@ -995,9 +1025,9 @@ server {
     http2 on;
     {{- end }}
     {{- if or (eq $vhost.https_method "nohttps") (eq $vhost.https_method "noredirect") }}
-    listen {{ $globals.config.external_http_port }} {{ $default_server }};
+    listen {{ $globals.config.external_http_port }} {{- $default_server }} {{- $proxy_protocol }};
         {{- if $globals.config.enable_ipv6 }}
-    listen [::]:{{ $globals.config.external_http_port }} {{ $default_server }};
+    listen [::]:{{ $globals.config.external_http_port }} {{- $default_server }} {{- $proxy_protocol }};
         {{- end }}
 
         {{- if (and (eq $vhost.https_method "noredirect") $vhost.acme_http_challenge_enabled) }}
@@ -1012,17 +1042,17 @@ server {
         {{- end }}
     {{- end }}
     {{- if ne $vhost.https_method "nohttps" }}
-    listen {{ $globals.config.external_https_port }} ssl {{ $default_server }};
+    listen {{ $globals.config.external_https_port }} ssl {{- $default_server }} {{- $proxy_protocol }};
         {{- if $globals.config.enable_ipv6 }}
-    listen [::]:{{ $globals.config.external_https_port }} ssl {{ $default_server }};
+    listen [::]:{{ $globals.config.external_https_port }} ssl {{- $default_server }} {{- $proxy_protocol }};
         {{- end }}
 
         {{- if $vhost.http3_enabled }}
     http3 on;
     add_header alt-svc 'h3=":{{ $globals.config.external_https_port }}"; ma=86400;';
-    listen {{ $globals.config.external_https_port }} quic {{ $default_server }};
+    listen {{ $globals.config.external_https_port }} quic {{- $default_server }} {{- $proxy_protocol }};
             {{- if $globals.config.enable_ipv6 }}
-    listen [::]:{{ $globals.config.external_https_port }} quic {{ $default_server }};
+    listen [::]:{{ $globals.config.external_https_port }} quic {{- $default_server }} {{- $proxy_protocol }};
             {{- end }}
         {{- end }}
 
@@ -1065,7 +1095,7 @@ server {
     {{- $vhostFileName :=  $vhost.is_regexp | ternary (sha1 $hostname) $hostname }}
 
     {{- if (exists (printf "/etc/nginx/vhost.d/%s" $vhostFileName)) }}
-    include {{ printf "/etc/nginx/vhost.d/%s" $vhostFileName }};
+    include {{ printf "/etc/nginx/vhost.d/%s" (replace $vhostFileName "*" "\\*" -1) }};
     {{- else if (exists "/etc/nginx/vhost.d/default") }}
     include /etc/nginx/vhost.d/default;
     {{- end }}
@@ -1073,11 +1103,11 @@ server {
     {{/* SSL Client Certificate Validation */}}
     {{/* If vhost(hash).ca.crt exists, include CA */}}
     {{- if (exists (printf "/etc/nginx/certs/%s.ca.crt" $vhostFileName)) }}
-    ssl_client_certificate {{ printf "/etc/nginx/certs/%s.ca.crt" $vhostFileName }}; 
+    ssl_client_certificate {{ printf "/etc/nginx/certs/%s.ca.crt" $vhostFileName }};
     ssl_verify_client {{ $vhost.ssl_verify_client }};
         {{/* If vhost(hash).crl.pem exists, include CRL */}}
         {{- if (exists (printf "/etc/nginx/certs/%s.crl.pem" $vhostFileName)) }}
-    ssl_crl {{ printf "/etc/nginx/certs/%s.crl.pem" $vhostFileName }}; 
+    ssl_crl {{ printf "/etc/nginx/certs/%s.crl.pem" $vhostFileName }};
         {{ end }}
     {{/* Else if no vhost CA file exists, but a global ca.crt exists include it */}}
     {{ else if (exists "/etc/nginx/certs/ca.crt") }}

@@ -7,6 +7,16 @@ Note: when updating to a newer release of metaphactory, also regard the informat
 If not mentioned otherwise, the docker-compose definitions are backwards compatible to the previous released version.
 
 
+## unreleased (Release 5.10.0)
+
+
+Other changes:
+
+- Update Nginx-proxy to 1.9.0 (Nginx version: 1.29.3)
+- Update ACME companion to 2.6.2
+- Maintain nginx.tmpl from nginx-proxy upstream
+
+
 ## 2025-10-09 (Release 5.9.0)
 
 The docker tags have been updated to the 5.9.0 release of metaphactory.
@@ -19,7 +29,7 @@ Other changes:
 - Update GraphDB to 11.1.0 (Note: a GraphDB license is required)
 - Update RDFox to 7.4b (Note: requires `-channel` in the init parameters)
 - Update Nginx-proxy to 1.8.0 (Nginx version: 1.29.1)
-- Update ACME companion to 1.6.1
+- Update ACME companion to 2.6.1
 - No longer expose ports for the GraphDB workbench and RDFox console
 - Document fallback Nginx redirect configuration for unknown hosts
 

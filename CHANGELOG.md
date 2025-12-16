@@ -10,6 +10,9 @@ If not mentioned otherwise, the docker-compose definitions are backwards compati
 ## unreleased (Release 5.10.0)
 
 
+For metaphactory, the default memory reservation on the container has been increased to 2GB.
+This is to adhere to higher memory requirements for metis AI Services use-cases.
+
 Other changes:
 
 - Update RDFox to 7.5 (Note: changes `-allowed-url-schemes-on-import` in the init parameters)

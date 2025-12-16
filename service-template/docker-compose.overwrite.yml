@@ -4,8 +4,8 @@ services:
     ports:
       - "10214:8080"
     #  - "10213:8443"
-    #mem_limit: 1g
-    #mem_reservation: 1g
+    #mem_limit: 2g
+    #mem_reservation: 2g
     #environment:
     # Uncomment the following line(s) to activate bundled apps
     # - MP_APP_AI_SERVICES=/bundled/apps/ai-services

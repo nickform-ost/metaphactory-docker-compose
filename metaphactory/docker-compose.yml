@@ -4,8 +4,8 @@ services:
   container_name: "${COMPOSE_PROJECT_NAME}-metaphactory"
   image: "${METAPHACTORY_IMAGE}"
   restart: unless-stopped
-  mem_limit: 1g
-  mem_reservation: 1g
+  mem_limit: 2g
+  mem_reservation: 2g
   environment:
      - PLATFORM_OPTS=${METAPHACTORY_OPTS}
      - VIRTUAL_HOST=${COMPOSE_PROJECT_NAME}.${HOST_NAME}

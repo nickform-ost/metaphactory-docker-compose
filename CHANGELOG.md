@@ -15,6 +15,7 @@ This is to adhere to higher memory requirements for metis AI Services use-cases.
 
 Other changes:
 
+- Update GraphDB to 11.2.0
 - Update RDFox to 7.5 (Note: changes `-allowed-url-schemes-on-import` in the init parameters)
 - Update Nginx-proxy to 1.9.0 (Nginx version: 1.29.3)
 - Update ACME companion to 2.6.2
